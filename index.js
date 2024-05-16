@@ -20,7 +20,6 @@ async function scrapePages(url) {
     const images = $('img');
     await downloadImages(images, outputDir, $)
 
-
     const bar = new ProgressBar(`Scraping page ${pageNumber} [:bar] :percent :etas`, {
         complete: '=',
         incomplete: ' ',
@@ -106,11 +105,61 @@ async function downloadCSS(url) {
     }
 }
 
+async function downloadFavicons(url) {
+    const response = await axios.get(url);
+    const $ = cheerio.load(response.data);
+    const faviconLinks = $('link[rel="icon"], link[rel="shortcut icon"]');
+
+    for (let i = 0; i < faviconLinks.length; i++) {
+        const faviconUrl = new URL($(faviconLinks[i]).attr('href'), url).href;
+        const faviconName = path.basename(faviconUrl);
+        const faviconDir = path.join(outputDir, faviconUrl.replace(baseUrl, '').replace(faviconName, ''));
+        if (!fs.existsSync(faviconDir)) {
+            fs.mkdirSync(faviconDir, { recursive: true });
+        }
+        const faviconPath = path.join(faviconDir, faviconName);
+
+        const response = await axios.get(faviconUrl, { responseType: 'stream' });
+        const writer = fs.createWriteStream(faviconPath);
+
+        response.data.pipe(writer);
+
+        await new Promise((resolve, reject) => {
+            writer.on('finish', resolve);
+            writer.on('error', reject);
+        });
+
+        console.log(`Favicon saved: ${faviconPath}`);
+    }
+}
+
+async function downloadScripts(url) {
+    const response = await axios.get(url);
+    const $ = cheerio.load(response.data);
+    const scriptLinks = $('script[src]');
+
+    for (let i = 0; i < scriptLinks.length; i++) {
+        const scriptUrl = new URL($(scriptLinks[i]).attr('src'), url).href;
+        const scriptName = path.basename(scriptUrl);
+        const scriptDir = path.join(outputDir, scriptUrl.replace(baseUrl, '').replace(scriptName, ''));
+        if (!fs.existsSync(scriptDir)) {
+            fs.mkdirSync(scriptDir, { recursive: true });
+        }
+        const scriptPath = path.join(scriptDir, scriptName);
+
+        const scriptResponse = await axios.get(scriptUrl);
+        fs.writeFileSync(scriptPath, scriptResponse.data);
+        console.log(`Script saved: ${scriptPath}`);
+    }
+}
+
 (async () => {
     if (!fs.existsSync(outputDir)) {
         fs.mkdirSync(outputDir, { recursive: true });
     }
     await downloadCSS(baseUrl);
+    await downloadFavicons(baseUrl);
+    await downloadScripts(baseUrl);
     await scrapePages(baseUrl);
     console.log('Scraping complete!');
 })();
