@@ -18,6 +18,8 @@ async function scrapePages(url) {
     const links = $('article.product_pod a');
     const totalPages = links.length;
     const images = $('img');
+    await downloadImages(images, outputDir, $)
+
 
     const bar = new ProgressBar(`Scraping page ${pageNumber} [:bar] :percent :etas`, {
         complete: '=',
@@ -58,6 +60,29 @@ async function downloadPage(url, filePath) {
     }
 
     fs.writeFileSync(filePath, response.data);
+}
+
+async function downloadImages(imageLinks, dirPath, $) {
+    for (let i = 0; i < imageLinks.length; i++) {
+        const imageUrl = new URL($(imageLinks[i]).attr('src'), baseUrl).href;
+        const imageName = imageUrl.replace(baseUrl, '');
+        const imagePath = path.join(dirPath, imageName);
+        const dirpath = path.dirname(imagePath);
+
+        if (!fs.existsSync(dirpath)) {
+            fs.mkdirSync(dirpath, { recursive: true });
+        }
+
+        const response = await axios.get(imageUrl, { responseType: 'stream' });
+        const writer = fs.createWriteStream(imagePath);
+
+        response.data.pipe(writer);
+
+        await new Promise((resolve, reject) => {
+            writer.on('finish', resolve);
+            writer.on('error', reject);
+        });
+    }
 }
 
 (async () => {
