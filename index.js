@@ -14,6 +14,17 @@ async function scrapePages(url) {
     if (!url.includes('page')) {
         const indexFilePath = path.join(outputDir, 'index.html')
         fs.writeFileSync(indexFilePath, response.data);
+    } else {
+        const pagePath = url.replace(baseUrl, '');
+        const fileName = path.basename(pagePath);
+        const fileDir = path.join(outputDir, path.dirname(pagePath));
+        const filePath = path.join(fileDir, fileName);
+
+        if (!fs.existsSync(fileDir)) {
+            fs.mkdirSync(fileDir, { recursive: true });
+        }
+
+        fs.writeFileSync(filePath, response.data);
     }
     const links = $('article.product_pod a');
     const totalPages = links.length;
