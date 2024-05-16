@@ -64,6 +64,9 @@ async function scrapePages(url) {
 async function downloadPage(url, filePath) {
     const response = await axios.get(url);
     const dirPath = path.dirname(filePath);
+    const $ = cheerio.load(response.data);
+    const images = $('img');
+    await downloadImages(images, outputDir, $)
 
     if (!fs.existsSync(dirPath)) {
         fs.mkdirSync(dirPath, { recursive: true });
