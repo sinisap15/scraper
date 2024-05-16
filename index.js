@@ -85,10 +85,32 @@ async function downloadImages(imageLinks, dirPath, $) {
     }
 }
 
+async function downloadCSS(url) {
+    // TODO: Not the best approach - fix this
+    const response = await axios.get(url);
+    const $ = cheerio.load(response.data);
+    const cssLinks = $('link[rel="stylesheet"]');
+
+    for (let i = 0; i < cssLinks.length; i++) {
+        const cssUrl = new URL($(cssLinks[i]).attr('href'), url).href;
+        const cssName = path.basename(cssUrl);
+        const cssDir = path.join(outputDir, cssUrl.replace(baseUrl, '').replace(cssName, ''));
+        if (!fs.existsSync(cssDir)) {
+            fs.mkdirSync(cssDir, { recursive: true });
+        }
+        const cssPath = path.join(cssDir, cssName);
+
+        const response = await axios.get(cssUrl);
+        fs.writeFileSync(cssPath, response.data);
+        console.log(`CSS file saved: ${cssPath}`);
+    }
+}
+
 (async () => {
     if (!fs.existsSync(outputDir)) {
         fs.mkdirSync(outputDir, { recursive: true });
     }
+    await downloadCSS(baseUrl);
     await scrapePages(baseUrl);
     console.log('Scraping complete!');
 })();
