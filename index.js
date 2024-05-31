@@ -167,6 +167,33 @@ async function downloadScripts(url) {
     }
 }
 
+async function downloadCategories(url) {
+    const response = await axios.get(url);
+    const $ = cheerio.load(response.data);
+    const categories = $('ul.nav-list a');
+    const totalCategories = categories.length;
+
+    const bar = new ProgressBar(`Scraping categories [:bar] :percent :etas`, {
+        complete: '=',
+        incomplete: ' ',
+        width: 20,
+        total: totalCategories,
+    });
+
+    for (let i = 0; i < categories.length; i++) {
+        let category = $(categories[i]).attr('href');
+        if (url.includes('catalogue')) {
+            category = '/catalogue/' + category;
+        }
+        const pageUrl = new URL(category, baseUrl).href;
+        const filePath = path.join(outputDir, pageUrl.replace(baseUrl, ''));
+
+        await downloadPage(pageUrl, filePath);
+        bar.tick();
+    }
+    console.log('Categories saved!');
+}
+
 (async () => {
     if (!fs.existsSync(outputDir)) {
         fs.mkdirSync(outputDir, { recursive: true });
@@ -174,6 +201,7 @@ async function downloadScripts(url) {
     await downloadCSS(baseUrl);
     await downloadFavicons(baseUrl);
     await downloadScripts(baseUrl);
+    await downloadCategories(baseUrl);
     await scrapePages(baseUrl);
     console.log('Scraping complete!');
 })();
