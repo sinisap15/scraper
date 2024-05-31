@@ -1,0 +1,24 @@
+{
+  "name": "scraper",
+  "version": "1.0.0",
+  "description": "Scraping app for websites",
+  "main": "build/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "build": "rm -rf build && tsc -p jsconfig.build.json",
+    "lint": "eslint . --ext .ts --fix --max-warnings=546"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@https://github.com/sinisap15/scraper"
+  },
+  "author": "Siniša Panić",
+  "license": "UNLICENSED",
+  "homepage": "https://github.com/sinisap15/scraper",
+  "dependencies": {
+    "axios": "^1.7.2",
+    "cheerio": "^1.0.0-rc.12",
+    "lint": "^0.8.19",
+    "progress": "^2.0.3"
+  }
+}
