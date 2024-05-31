@@ -4,6 +4,7 @@
 .npm
 coverage
 .env
+output
 
 # OS
 .DS_Store
